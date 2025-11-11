@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Student Risk Prediction{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-4"><i class="bi bi-speedometer2"></i> Dashboard Overview</h1>
+        <p class="lead text-muted">Monitor student risk levels and take proactive action</p>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <p class="stat-label">Total Students</p>
+                <p class="stat-number text-primary">{{ stats.total }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card high-risk">
+            <div class="card-body">
+                <p class="stat-label">High Risk</p>
+                <p class="stat-number text-danger">{{ stats.high_risk }}</p>
+                <small class="text-muted">{{ stats.high_risk_percent }}% of total</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card medium-risk">
+            <div class="card-body">
+                <p class="stat-label">Medium Risk</p>
+                <p class="stat-number text-warning">{{ stats.medium_risk }}</p>
+                <small class="text-muted">{{ stats.medium_risk_percent }}% of total</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card safe">
+            <div class="card-body">
+                <p class="stat-label">Safe</p>
+                <p class="stat-number text-success">{{ stats.safe }}</p>
+                <small class="text-muted">{{ stats.safe_percent }}% of total</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-pie-chart-fill"></i> Risk Distribution</h5>
+                <canvas id="riskChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-exclamation-triangle-fill"></i> Quick Actions</h5>
+                <div class="d-grid gap-3 mt-4">
+                    <a href="/students?risk=High Risk" class="btn btn-danger btn-lg">
+                        <i class="bi bi-alert-circle"></i> View High Risk Students ({{ stats.high_risk }})
+                    </a>
+                    <a href="/students?risk=Medium Risk" class="btn btn-warning btn-lg">
+                        <i class="bi bi-exclamation-circle"></i> View Medium Risk Students ({{ stats.medium_risk }})
+                    </a>
+                    <a href="/students" class="btn btn-primary btn-lg">
+                        <i class="bi bi-people"></i> View All Students
+                    </a>
+                    <a href="/predict" class="btn btn-info btn-lg text-white">
+                        <i class="bi bi-calculator"></i> Predict New Student Risk
+                    </a>
+                    <a href="/reports/bulk?risk=High Risk" class="btn btn-secondary btn-lg">
+                        <i class="bi bi-file-earmark-pdf"></i> Download High Risk Report
+                    </a>
+                    <a href="/send_bulk_alerts" class="btn btn-danger btn-lg">
+                        <i class="bi bi-bell-fill"></i> Send All High Risk Alerts
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-info-circle-fill"></i> System Information</h5>
+                <div class="alert alert-info" role="alert">
+                    <strong>How it works:</strong> The system uses machine learning to analyze student data 
+                    (attendance, scores, engagement) and predicts risk levels. AI-powered recommendations 
+                    help educators intervene early and effectively.
+                </div>
+                <div class="row text-center mt-4">
+                    <div class="col-md-4">
+                        <i class="bi bi-robot" style="font-size: 3rem; color: #667eea;"></i>
+                        <h6 class="mt-2">ML Prediction</h6>
+                        <p class="text-muted small">Random Forest algorithm analyzes patterns</p>
+                    </div>
+                    <div class="col-md-4">
+                        <i class="bi bi-lightbulb-fill" style="font-size: 3rem; color: #ffc107;"></i>
+                        <h6 class="mt-2">AI Interventions</h6>
+                        <p class="text-muted small">Personalized recommendations via LangChain</p>
+                    </div>
+                    <div class="col-md-4">
+                        <i class="bi bi-graph-up-arrow" style="font-size: 3rem; color: #28a745;"></i>
+                        <h6 class="mt-2">Early Action</h6>
+                        <p class="text-muted small">Prevent failures before they happen</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Risk Distribution Pie Chart
+    const ctx = document.getElementById('riskChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Critical Risk', 'High Risk', 'Medium Risk', 'Safe'],
+            datasets: [{
+                data: [
+                    {{ stats.critical_risk or stats.critical_risk_students or 0 }},
+                    {{ stats.high_risk or stats.high_risk_students or 0 }},
+                    {{ stats.medium_risk or stats.medium_risk_students or 0 }},
+                    {{ stats.safe or stats.safe_students or 0 }}
+                ],
+                backgroundColor: ['#8B0000', '#dc3545', '#ffc107', '#28a745'],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        font: {
+                            size: 14
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = {{ stats.total_students or stats.total or 0 }};
+                            const percentage = total ? ((value / total) * 100).toFixed(1) : 0;
+                            return `${label}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

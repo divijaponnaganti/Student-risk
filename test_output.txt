@@ -1,0 +1,10 @@
+✓ Admin logged in successfully
+
+=== Testing Individual Alert to S001 (User ID 5) ===
+Alert response status: 200
+Alert result: {'alert_reason': 'Test alert for debugging - individual student alert', 'message': 'Alert sent successfully to Alice Johnson', 'success': True}
+✓ Individual alert sent successfully!
+
+=== Checking Notification Log After Individual Alert ===
+Found 1 notifications in log
+  - 2025-11-10T21:19:40.808191: email alert to Alice Johnson (S001)

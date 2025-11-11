@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Students List - Student Risk Prediction{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-4"><i class="bi bi-people-fill"></i> Students List</h1>
+        <p class="lead text-muted">View and manage all students</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col">
+        <div class="btn-group" role="group">
+            <a href="/students?risk=all" class="btn {% if risk_filter == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                All Students
+            </a>
+            <a href="/students?risk=Critical Risk" class="btn {% if risk_filter == 'Critical Risk' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+                Critical Risk
+            </a>
+            <a href="/students?risk=High Risk" class="btn {% if risk_filter == 'High Risk' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+                High Risk
+            </a>
+            <a href="/students?risk=Medium Risk" class="btn {% if risk_filter == 'Medium Risk' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+                Medium Risk
+            </a>
+            <a href="/students?risk=Safe" class="btn {% if risk_filter == 'Safe' %}btn-success{% else %}btn-outline-success{% endif %}">
+                Safe
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student ID</th>
+                                <th>Name</th>
+                                <th>Attendance</th>
+                                <th>Avg Score</th>
+                                <th>Assignments</th>
+                                <th>Engagement</th>
+                                <th>Risk Level</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr>
+                                <td><strong>{{ student.StudentID }}</strong></td>
+                                <td>{{ student.Name }}</td>
+                                <td>
+                                    <div class="progress progress-custom">
+                                        <div class="progress-bar {% if student.Attendance < 60 %}bg-danger{% elif student.Attendance < 75 %}bg-warning{% else %}bg-success{% endif %}" 
+                                             role="progressbar" 
+                                             style="width: {{ student.Attendance }}%">
+                                            {{ student.Attendance }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="progress progress-custom">
+                                        <div class="progress-bar {% if student.AverageScore < 50 %}bg-danger{% elif student.AverageScore < 70 %}bg-warning{% else %}bg-success{% endif %}" 
+                                             role="progressbar" 
+                                             style="width: {{ student.AverageScore }}%">
+                                            {{ student.AverageScore }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ student.AssignmentsSubmitted }}/{{ student.TotalAssignments }}</td>
+                                <td>
+                                    <span class="badge {% if student.EngagementScore < 40 %}bg-danger{% elif student.EngagementScore < 60 %}bg-warning{% else %}bg-success{% endif %}">
+                                        {{ student.EngagementScore }}%
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge {% if student.RiskLevel in ['Critical Risk','High Risk'] %}badge-high-risk{% elif student.RiskLevel == 'Medium Risk' %}badge-medium-risk{% else %}badge-safe{% endif %}">
+                                        {{ student.RiskLevel }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="/student/{{ student.StudentID }}" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-eye"></i> Details
+                                        </a>
+                                        <a href="/student/{{ student.StudentID }}/report" class="btn btn-sm btn-info">
+                                            <i class="bi bi-file-earmark-pdf"></i> Report
+                                        </a>
+                                        {% if student.RiskLevel in ['High Risk', 'Critical Risk'] %}
+                                        <button onclick="sendAlert('{{ student.StudentID }}', '{{ student.Name }}')" class="btn btn-sm btn-warning">
+                                            <i class="bi bi-bell"></i> Alert
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                {% if students|length == 0 %}
+                <div class="alert alert-info text-center" role="alert">
+                    <i class="bi bi-info-circle"></i> No students found matching the selected filter.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function sendAlert(studentId, studentName) {
+    if (confirm(`Are you sure you want to send an alert for ${studentName}?`)) {
+        // Show loading state
+        const button = event.target.closest('button');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-hourglass-split"></i> Sending...';
+        button.disabled = true;
+        
+        fetch(`/api/send_alert/${studentId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Restore button
+            button.innerHTML = originalText;
+            button.disabled = false;
+            
+            if (data.success) {
+                // Show success popup
+                alert('✅ ' + data.message);
+            } else {
+                // Show error popup
+                alert('❌ ' + data.message);
+            }
+        })
+        .catch(error => {
+            // Restore button
+            button.innerHTML = originalText;
+            button.disabled = false;
+            
+            console.error('Error:', error);
+            alert('❌ An error occurred while sending the alert. Please try again.');
+        });
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Student Risk Prediction System{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --risk-critical: #8b0000;
+            --risk-high: #dc3545;
+            --risk-medium: #ffc107;
+            --risk-safe: #28a745;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .badge-critical-risk {
+            background-color: var(--risk-critical);
+            color: white;
+        }
+        
+        .badge-high-risk {
+            background-color: var(--risk-high);
+        }
+        
+        .badge-medium-risk {
+            background-color: var(--risk-medium);
+            color: #000;
+        }
+        
+        .badge-safe {
+            background-color: var(--risk-safe);
+        }
+        
+        .stat-card {
+            padding: 1.5rem;
+            border-left: 4px solid;
+        }
+        
+        .stat-card.critical-risk {
+            border-left-color: var(--risk-critical);
+        }
+        
+        .stat-card.high-risk {
+            border-left-color: var(--risk-high);
+        }
+        
+        .stat-card.medium-risk {
+            border-left-color: var(--risk-medium);
+        }
+        
+        .stat-card.safe {
+            border-left-color: var(--risk-safe);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .intervention-card {
+            border-left: 3px solid;
+            margin-bottom: 1rem;
+        }
+        
+        .intervention-card.priority-high {
+            border-left-color: var(--risk-high);
+        }
+        
+        .intervention-card.priority-medium {
+            border-left-color: var(--risk-medium);
+        }
+        
+        .intervention-card.priority-low {
+            border-left-color: #17a2b8;
+        }
+        
+        .progress-custom {
+            height: 25px;
+            border-radius: 8px;
+        }
+        
+        main {
+            flex: 1;
+        }
+        
+        footer {
+            margin-top: auto;
+            padding: 2rem 0;
+            background-color: #343a40;
+            color: white;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-mortarboard-fill"></i> Student Risk Prediction
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                {% if current_user.is_authenticated %}
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard"><i class="bi bi-house-fill"></i> Dashboard</a>
+                    </li>
+                    {% if current_user.is_administrator() %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/students"><i class="bi bi-people-fill"></i> All Students</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/upload"><i class="bi bi-upload"></i> Upload Data</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/sentiment_dashboard"><i class="bi bi-graph-up-arrow"></i> Sentiment Dashboard</a>
+                    </li>
+                    {% elif current_user.is_faculty() %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/predict"><i class="bi bi-graph-up"></i> Predict Risk</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/notifications"><i class="bi bi-bell"></i> Notifications</a>
+                    </li>
+                    {% elif current_user.is_student() %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/student_support"><i class="bi bi-chat-heart"></i> Support</a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            {% if current_user.is_administrator() %}
+                                <i class="bi bi-shield-check"></i>
+                            {% elif current_user.is_faculty() %}
+                                <i class="bi bi-person-badge"></i>
+                            {% else %}
+                                <i class="bi bi-person-circle"></i>
+                            {% endif %}
+                            {{ current_user.get_full_name() }}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><h6 class="dropdown-header">{{ current_user.role.title() }}</h6></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <main class="container my-5">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="text-center">
+        <div class="container">
+            <p class="mb-0">
+                &copy; Copyright 2025 Student Risk. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

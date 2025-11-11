@@ -1,0 +1,508 @@
+{% extends "base.html" %}
+
+{% block title %}Student Feedback & Support{% endblock %}
+
+{% block extra_css %}
+<style>
+    .feedback-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .feedback-form {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.3s;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .feedback-textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+    
+    .btn-submit {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+    }
+    
+    .chat-section {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+    }
+    
+    .chat-container {
+        height: 400px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .chat-messages {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        background: #f9fafb;
+    }
+    
+    .message {
+        margin-bottom: 15px;
+        display: flex;
+        align-items: flex-start;
+    }
+    
+    .message.student {
+        justify-content: flex-end;
+    }
+    
+    .message.bot {
+        justify-content: flex-start;
+    }
+    
+    .message-bubble {
+        max-width: 70%;
+        padding: 12px 16px;
+        border-radius: 18px;
+        word-wrap: break-word;
+    }
+    
+    .message.student .message-bubble {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    .message.bot .message-bubble {
+        background: white;
+        color: #374151;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .chat-input-container {
+        padding: 20px;
+        border-top: 1px solid #e5e7eb;
+        background: white;
+        border-radius: 0 0 8px 8px;
+    }
+    
+    .chat-input-form {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .chat-input {
+        flex: 1;
+        padding: 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 25px;
+        font-size: 14px;
+    }
+    
+    .chat-send-btn {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 45px;
+        height: 45px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .resources-section {
+        background: #fef3c7;
+        border: 1px solid #f59e0b;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .resources-title {
+        color: #92400e;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+    
+    .resource-item {
+        background: white;
+        padding: 10px;
+        border-radius: 6px;
+        margin-bottom: 8px;
+        border-left: 4px solid #f59e0b;
+    }
+    
+    .crisis-alert {
+        background: #fef2f2;
+        border: 2px solid #ef4444;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+        text-align: center;
+    }
+    
+    .crisis-title {
+        color: #dc2626;
+        font-weight: bold;
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+    
+    .crisis-text {
+        color: #7f1d1d;
+        margin-bottom: 15px;
+    }
+    
+    .crisis-contact {
+        background: #dc2626;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-block;
+        margin: 5px;
+    }
+    
+    .loading {
+        display: none;
+        text-align: center;
+        padding: 20px;
+        color: #6b7280;
+    }
+    
+    .typing-indicator {
+        display: none;
+        padding: 10px;
+        font-style: italic;
+        color: #6b7280;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="feedback-container">
+    <h1 class="text-3xl font-bold text-gray-900 mb-8 text-center">Student Support Center</h1>
+    
+    <!-- Feedback Form Section -->
+    <div class="feedback-form">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-6">Share Your Thoughts</h2>
+        <p class="text-gray-600 mb-6">Your feedback helps us understand how you're doing and provide better support. Everything you share is confidential.</p>
+        
+        <form id="feedbackForm" method="POST" action="{{ url_for('submit_feedback') }}">
+            <div class="form-group">
+                <label for="student_id" class="form-label">Student ID</label>
+                <input type="text" id="student_id" name="student_id" class="form-control" required 
+                       placeholder="Enter your student ID">
+            </div>
+            
+            <div class="form-group">
+                <label for="feedback_type" class="form-label">What would you like to share about?</label>
+                <select id="feedback_type" name="feedback_type" class="form-control" required>
+                    <option value="">Select a topic...</option>
+                    <option value="general">General feedback</option>
+                    <option value="academic">Academic concerns</option>
+                    <option value="personal">Personal/emotional support</option>
+                    <option value="campus_life">Campus life</option>
+                    <option value="services">Campus services</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="feedback_text" class="form-label">Your Message</label>
+                <textarea id="feedback_text" name="feedback_text" class="form-control feedback-textarea" 
+                         required placeholder="Share your thoughts, concerns, or feedback here..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <button type="submit" class="btn-submit">
+                    <span id="submitText">Submit Feedback</span>
+                    <span id="submitLoading" class="loading">Submitting...</span>
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Chat Support Section -->
+    <div class="chat-section">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-6">Chat with Support Bot</h2>
+        <p class="text-gray-600 mb-4">Need someone to talk to? Our AI support bot is here to listen and help 24/7.</p>
+        
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot">
+                    <div class="message-bubble">
+                        Hi! I'm here to listen and support you. How are you feeling today? Feel free to share anything that's on your mind.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="typing-indicator" id="typingIndicator">
+                Support bot is typing...
+            </div>
+            
+            <div class="chat-input-container">
+                <form class="chat-input-form" id="chatForm">
+                    <input type="text" id="chatInput" class="chat-input" 
+                           placeholder="Type your message here..." required>
+                    <button type="submit" class="chat-send-btn">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Resources Section (shown when needed) -->
+        <div id="resourcesSection" class="resources-section" style="display: none;">
+            <div class="resources-title">Helpful Resources</div>
+            <div id="resourcesList"></div>
+        </div>
+        
+        <!-- Crisis Alert (shown for high-risk situations) -->
+        <div id="crisisAlert" class="crisis-alert" style="display: none;">
+            <div class="crisis-title">🚨 Immediate Support Available</div>
+            <div class="crisis-text">
+                If you're in crisis or having thoughts of self-harm, please reach out for immediate help:
+            </div>
+            <a href="tel:988" class="crisis-contact">Call 988 - Crisis Lifeline</a>
+            <a href="sms:741741" class="crisis-contact">Text HOME to 741741</a>
+        </div>
+    </div>
+</div>
+
+<script>
+// Chat functionality
+// Use a stable session ID across reloads for continuity
+let currentSessionId = localStorage.getItem('chatSessionId');
+if (!currentSessionId) {
+  if (window.crypto && crypto.randomUUID) {
+    currentSessionId = crypto.randomUUID();
+  } else {
+    currentSessionId = 'session_' + Date.now() + '-' + Math.random().toString(16).slice(2);
+  }
+  localStorage.setItem('chatSessionId', currentSessionId);
+}
+// Try to inject the logged-in student's ID; fallback to prompt later
+let currentStudentId = '{{ current_user.student_id if current_user.is_authenticated and current_user.student_id else "" }}';
+
+document.getElementById('feedbackForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.querySelector('.btn-submit');
+    const submitText = document.getElementById('submitText');
+    const submitLoading = document.getElementById('submitLoading');
+    
+    // Show loading state
+    submitText.style.display = 'none';
+    submitLoading.style.display = 'inline';
+    submitBtn.disabled = true;
+    
+    const formData = new FormData(this);
+    
+    try {
+        const response = await fetch('/submit_feedback', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Show success message
+            alert('Thank you for your feedback! We appreciate you sharing with us.');
+            
+            // Reset form
+            this.reset();
+            
+            // Show resources if needed
+            if (result.needs_attention) {
+                showSupportResources(result.resources || []);
+            }
+            
+            // Show crisis alert if high risk
+            if (result.counselor_referral) {
+                showCrisisAlert();
+            }
+        } else {
+            alert('There was an error submitting your feedback. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('There was an error submitting your feedback. Please try again.');
+    } finally {
+        // Reset button state
+        submitText.style.display = 'inline';
+        submitLoading.style.display = 'none';
+        submitBtn.disabled = false;
+    }
+});
+
+document.getElementById('chatForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const chatInput = document.getElementById('chatInput');
+    const message = chatInput.value.trim();
+    
+    if (!message) return;
+    
+    // Get student ID from feedback form or prompt
+    if (!currentStudentId) {
+        const fromForm = document.getElementById('student_id')?.value;
+        currentStudentId = fromForm || prompt('Please enter your Student ID to start chatting:');
+        if (!currentStudentId) return;
+    }
+    
+    // Add user message to chat
+    addMessageToChat('student', message);
+    
+    // Clear input
+    chatInput.value = '';
+    
+    // Show typing indicator
+    showTypingIndicator();
+    
+    try {
+        const response = await fetch('/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                student_id: currentStudentId,
+                message: message,
+                session_id: currentSessionId
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        const ct = response.headers.get('content-type') || '';
+        if (!ct.includes('application/json')) {
+            throw new Error('Unexpected response format. Please log in again and retry.');
+        }
+        const result = await response.json();
+
+        // Hide typing indicator
+        hideTypingIndicator();
+
+        if (result.success && result.bot_response) {
+            // Add bot response to chat
+            addMessageToChat('bot', result.bot_response);
+
+            // Show resources if provided
+            if (result.resources_provided && result.resources_provided.length > 0) {
+                showSupportResources(result.resources_provided);
+            }
+
+            // Show crisis alert if needed
+            if (result.counselor_alert) {
+                showCrisisAlert();
+            }
+        } else {
+            addMessageToChat('bot', `I\'m sorry, I encountered an error: ${result.error || 'Unknown error'}. Please try again.`);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        hideTypingIndicator();
+        addMessageToChat('bot', `I\'m sorry, there was an error: ${error.message}. Please try again.`);
+    }
+});
+
+function addMessageToChat(type, message) {
+    const chatMessages = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${type}`;
+    
+    const bubbleDiv = document.createElement('div');
+    bubbleDiv.className = 'message-bubble';
+    bubbleDiv.textContent = message;
+    
+    messageDiv.appendChild(bubbleDiv);
+    chatMessages.appendChild(messageDiv);
+    
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function showTypingIndicator() {
+    document.getElementById('typingIndicator').style.display = 'block';
+}
+
+function hideTypingIndicator() {
+    document.getElementById('typingIndicator').style.display = 'none';
+}
+
+function showSupportResources(resources) {
+    const resourcesSection = document.getElementById('resourcesSection');
+    const resourcesList = document.getElementById('resourcesList');
+    
+    resourcesList.innerHTML = '';
+    
+    resources.forEach(resource => {
+        const resourceDiv = document.createElement('div');
+        resourceDiv.className = 'resource-item';
+        resourceDiv.innerHTML = `
+            <strong>${resource.name}</strong><br>
+            ${resource.description || resource.contact || ''}
+        `;
+        resourcesList.appendChild(resourceDiv);
+    });
+    
+    resourcesSection.style.display = 'block';
+}
+
+function showCrisisAlert() {
+    document.getElementById('crisisAlert').style.display = 'block';
+}
+
+// Auto-focus chat input when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('chatInput').focus();
+});
+</script>
+{% endblock %}

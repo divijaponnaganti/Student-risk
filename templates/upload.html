@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Data - Student Risk Prediction{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-4"><i class="bi bi-upload"></i> Upload Student Data</h1>
+        <p class="lead text-muted">Upload a CSV file with student information</p>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body p-4">
+                {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i> {{ error }}
+                </div>
+                {% endif %}
+                
+                <form method="POST" action="/upload" enctype="multipart/form-data">
+                    <div class="mb-4">
+                        <label for="file" class="form-label">Select CSV File</label>
+                        <input type="file" class="form-control" id="file" name="file" accept=".csv" required>
+                        <small class="text-muted">File must be in CSV format</small>
+                    </div>
+                    
+                    <div class="alert alert-info" role="alert">
+                        <h6><i class="bi bi-info-circle"></i> Required CSV Format</h6>
+                        <p class="mb-2">Your CSV file must include the following columns:</p>
+                        <ul class="mb-0">
+                            <li><strong>StudentID</strong> - Unique identifier</li>
+                            <li><strong>Name</strong> - Student name</li>
+                            <li><strong>Attendance</strong> - Attendance percentage (0-100)</li>
+                            <li><strong>AverageScore</strong> - Average score percentage (0-100)</li>
+                            <li><strong>AssignmentsSubmitted</strong> - Number of assignments submitted</li>
+                            <li><strong>TotalAssignments</strong> - Total number of assignments</li>
+                            <li><strong>EngagementScore</strong> - Engagement score (0-100)</li>
+                            <li><strong>PreviousGrade</strong> - Previous grade (A, B, C, D, F)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-cloud-upload"></i> Upload and Process
+                        </button>
+                        <a href="/" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0"><i class="bi bi-file-earmark-text"></i> Sample CSV Format</h6>
+            </div>
+            <div class="card-body">
+                <pre class="mb-0"><code>StudentID,Name,Attendance,AverageScore,AssignmentsSubmitted,TotalAssignments,EngagementScore,PreviousGrade
+S001,Alice Johnson,92,85,10,10,88,A
+S002,Bob Smith,45,42,5,10,35,C
+S003,Carol White,78,72,8,10,75,B</code></pre>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6><i class="bi bi-download"></i> Download Sample Data</h6>
+                <p class="small text-muted mb-2">
+                    You can download the sample student data file to see the correct format.
+                </p>
+                <a href="/data/sample_students.csv" class="btn btn-sm btn-outline-primary" download>
+                    <i class="bi bi-file-earmark-arrow-down"></i> Download sample_students.csv
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

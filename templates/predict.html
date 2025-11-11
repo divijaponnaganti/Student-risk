@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Predict Risk - Student Risk Prediction{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-4"><i class="bi bi-calculator"></i> Predict Student Risk</h1>
+        <p class="lead text-muted">Enter student data to predict risk level</p>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body p-4">
+                {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i> {{ error }}
+                </div>
+                {% endif %}
+                
+                <form method="POST" action="/predict">
+                    <div class="mb-3">
+                        <label for="attendance" class="form-label">Attendance Rate (%)</label>
+                        <input type="number" class="form-control" id="attendance" name="attendance" 
+                               min="0" max="100" step="0.1" required
+                               placeholder="e.g., 85.5">
+                        <small class="text-muted">Enter percentage between 0-100</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="average_score" class="form-label">Average Score (%)</label>
+                        <input type="number" class="form-control" id="average_score" name="average_score" 
+                               min="0" max="100" step="0.1" required
+                               placeholder="e.g., 72.3">
+                        <small class="text-muted">Enter percentage between 0-100</small>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="assignments_submitted" class="form-label">Assignments Submitted</label>
+                            <input type="number" class="form-control" id="assignments_submitted" 
+                                   name="assignments_submitted" min="0" required
+                                   placeholder="e.g., 8">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="total_assignments" class="form-label">Total Assignments</label>
+                            <input type="number" class="form-control" id="total_assignments" 
+                                   name="total_assignments" min="1" required
+                                   placeholder="e.g., 10">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="engagement_score" class="form-label">Engagement Score (%)</label>
+                        <input type="number" class="form-control" id="engagement_score" name="engagement_score" 
+                               min="0" max="100" step="0.1" required
+                               placeholder="e.g., 68.0">
+                        <small class="text-muted">Based on LMS activity, participation, etc.</small>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-graph-up"></i> Predict Risk Level
+                        </button>
+                        <a href="/" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6><i class="bi bi-info-circle"></i> How Prediction Works</h6>
+                <p class="small text-muted mb-0">
+                    The system uses a trained Random Forest machine learning model to analyze the input data 
+                    and predict the student's risk level. The model considers attendance patterns, academic 
+                    performance, assignment completion rates, and engagement metrics to make an accurate prediction.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

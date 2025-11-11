@@ -1,0 +1,659 @@
+{% extends "base.html" %}
+
+{% block title %}Sentiment Analysis Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-container {
+        padding: 20px;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-left: 4px solid #3b82f6;
+    }
+    
+    .stat-card.high-risk {
+        border-left-color: #ef4444;
+    }
+    
+    .stat-card.medium-risk {
+        border-left-color: #f59e0b;
+    }
+    
+    .stat-card.positive {
+        border-left-color: #10b981;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #1f2937;
+        margin-bottom: 8px;
+    }
+    
+    .stat-label {
+        color: #6b7280;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .alerts-section {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+    }
+    
+    .alert-item {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+    
+    .alert-item.high-risk {
+        border-left: 4px solid #ef4444;
+        background: #fef2f2;
+    }
+    
+    .alert-item.medium-risk {
+        border-left: 4px solid #f59e0b;
+        background: #fffbeb;
+    }
+    
+    .alert-content {
+        flex: 1;
+    }
+    
+    .alert-student {
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 4px;
+    }
+    
+    .alert-message {
+        color: #6b7280;
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+    }
+    
+    .alert-time {
+        color: #9ca3af;
+        font-size: 0.8rem;
+    }
+    
+    .alert-actions {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-action {
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: none;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .btn-acknowledge {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    .btn-acknowledge:hover {
+        background: #2563eb;
+    }
+    
+    .btn-contact {
+        background: #10b981;
+        color: white;
+    }
+    
+    .btn-contact:hover {
+        background: #059669;
+    }
+    
+    .trends-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .trend-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .chart-container {
+        height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f9fafb;
+        border-radius: 8px;
+        color: #6b7280;
+    }
+    
+    .students-table {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow-x: auto;
+    }
+    
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .table th,
+    .table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .table th {
+        background: #f9fafb;
+        font-weight: 600;
+        color: #374151;
+    }
+    
+    .risk-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .risk-badge.high {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+    
+    .risk-badge.medium {
+        background: #fffbeb;
+        color: #d97706;
+    }
+    
+    .risk-badge.low {
+        background: #f0fdf4;
+        color: #16a34a;
+    }
+    
+    .sentiment-score {
+        font-weight: 600;
+    }
+    
+    .sentiment-score.positive {
+        color: #16a34a;
+    }
+    
+    .sentiment-score.negative {
+        color: #dc2626;
+    }
+    
+    .sentiment-score.neutral {
+        color: #6b7280;
+    }
+    
+    .filter-section {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+    
+    .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+    }
+    
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .filter-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 4px;
+        font-size: 0.9rem;
+    }
+    
+    .filter-select {
+        padding: 8px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Sentiment Analysis Dashboard</h1>
+        <div class="flex gap-4">
+            <button onclick="refreshData()" class="bg-purple-600 text-yellow-300 px-4 py-2 rounded-lg hover:bg-purple-700 hover:text-yellow-200 font-semibold">
+                Refresh Data
+            </button>
+            <button onclick="exportReport()" class="bg-orange-600 text-cyan-300 px-4 py-2 rounded-lg hover:bg-orange-700 hover:text-cyan-200 font-semibold">
+                Export Report
+            </button>
+        </div>
+    </div>
+    
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <h3 class="text-lg font-semibold mb-4">Filters</h3>
+        <div class="filter-grid">
+            <div class="filter-group">
+                <label class="filter-label">Time Period</label>
+                <select id="timePeriod" class="filter-select" onchange="updateDashboard()">
+                    <option value="7">Last 7 days</option>
+                    <option value="30">Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Risk Level</label>
+                <select id="riskFilter" class="filter-select" onchange="updateDashboard()">
+                    <option value="all">All Risk Levels</option>
+                    <option value="high">High Risk Only</option>
+                    <option value="medium">Medium Risk Only</option>
+                    <option value="low">Low Risk Only</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Source Type</label>
+                <select id="sourceFilter" class="filter-select" onchange="updateDashboard()">
+                    <option value="all">All Sources</option>
+                    <option value="feedback">Feedback Only</option>
+                    <option value="chat">Chat Only</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics Grid -->
+    <div class="stats-grid">
+        <div class="stat-card high-risk">
+            <div class="stat-number" id="highRiskCount">{{ stats.high_risk_alerts or 0 }}</div>
+            <div class="stat-label">High Risk Alerts</div>
+        </div>
+        <div class="stat-card medium-risk">
+            <div class="stat-number" id="mediumRiskCount">{{ stats.medium_risk_alerts or 0 }}</div>
+            <div class="stat-label">Medium Risk Alerts</div>
+        </div>
+        <div class="stat-card positive">
+            <div class="stat-number" id="positiveCount">{{ stats.positive_interactions or 0 }}</div>
+            <div class="stat-label">Positive Interactions</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="totalInteractions">{{ stats.total_interactions or 0 }}</div>
+            <div class="stat-label">Total Interactions</div>
+        </div>
+    </div>
+    
+    <!-- Active Alerts Section -->
+    <div class="alerts-section">
+        <h2 class="text-xl font-semibold text-gray-800 mb-6">Active Alerts</h2>
+        
+        <div id="alertsList">
+            {% if alerts %}
+                {% for alert in alerts %}
+                <div class="alert-item {{ alert.risk_level }}-risk" data-alert-id="{{ alert.id }}">
+                    <div class="alert-content">
+                        <div class="alert-student">{{ alert.student_id }} - {{ alert.alert_type.replace('_', ' ').title() }}</div>
+                        <div class="alert-message">{{ alert.alert_message }}</div>
+                        <div class="alert-time">{{ alert.created_at }}</div>
+                    </div>
+                    <div class="alert-actions">
+                        {% if alert.status == 'active' %}
+                        <button class="btn-action btn-acknowledge" onclick="acknowledgeAlert('{{ alert.id }}')">
+                            Acknowledge
+                        </button>
+                        <button class="btn-action btn-contact" onclick="contactStudent('{{ alert.student_id }}')">
+                            Contact Student
+                        </button>
+                        {% else %}
+                        <span class="text-green-600 font-semibold">{{ alert.status.title() }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="text-center py-8 text-gray-500">
+                No active alerts at this time.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Trends Section -->
+    <div class="trends-section">
+        <div class="trend-card">
+            <h3 class="text-lg font-semibold mb-4">Sentiment Trends</h3>
+            <div class="chart-container">
+                <div>Sentiment trend chart will be displayed here</div>
+            </div>
+        </div>
+        <div class="trend-card">
+            <h3 class="text-lg font-semibold mb-4">Risk Distribution</h3>
+            <div class="chart-container">
+                <div>Risk distribution chart will be displayed here</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Students Table -->
+    <div class="students-table">
+        <h2 class="text-xl font-semibold text-gray-800 mb-6">Recent Student Interactions</h2>
+        
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Student ID</th>
+                    <th>Last Interaction</th>
+                    <th>Sentiment Score</th>
+                    <th>Risk Level</th>
+                    <th>Source</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="studentsTableBody">
+                {% if student_interactions %}
+                    {% for interaction in student_interactions %}
+                    <tr>
+                        <td>{{ interaction.student_id }}</td>
+                        <td>{{ interaction.timestamp }}</td>
+                        <td>
+                            <span class="sentiment-score {{ 'positive' if interaction.sentiment_score > 0.1 else 'negative' if interaction.sentiment_score < -0.1 else 'neutral' }}">
+                                {{ "%.3f"|format(interaction.sentiment_score) }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="risk-badge {{ interaction.risk_level }}">
+                                {{ interaction.risk_level }}
+                            </span>
+                        </td>
+                        <td>{{ interaction.source_type }}</td>
+                        <td>
+                            <button class="btn-action btn-acknowledge" onclick="viewStudentDetails('{{ interaction.student_id }}')">
+                                View Details
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center py-8 text-gray-500">
+                        No student interactions found.
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+async function refreshData() {
+    try {
+        // Show loading state
+        const refreshBtn = document.querySelector('button[onclick="refreshData()"]');
+        const originalText = refreshBtn.innerHTML;
+        refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Refreshing...';
+        refreshBtn.disabled = true;
+        
+        const response = await fetch('/api/sentiment_dashboard_data');
+        const data = await response.json();
+        
+        // Restore button
+        refreshBtn.innerHTML = originalText;
+        refreshBtn.disabled = false;
+        
+        if (data.success) {
+            updateDashboardData(data);
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            successMsg.style.cssText = 'top: 20px; right: 20px; z-index: 9999;';
+            successMsg.innerHTML = `
+                <i class="bi bi-check-circle"></i> Data refreshed successfully!
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(successMsg);
+            setTimeout(() => successMsg.remove(), 3000);
+        } else {
+            alert('Error refreshing data: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        // Restore button on error
+        const refreshBtn = document.querySelector('button[onclick="refreshData()"]');
+        refreshBtn.innerHTML = 'Refresh Data';
+        refreshBtn.disabled = false;
+        
+        console.error('Error refreshing data:', error);
+        alert('Error refreshing data. Please try again.');
+    }
+}
+
+async function updateDashboard() {
+    const timePeriod = document.getElementById('timePeriod').value;
+    const riskFilter = document.getElementById('riskFilter').value;
+    const sourceFilter = document.getElementById('sourceFilter').value;
+    
+    try {
+        const response = await fetch(`/api/sentiment_dashboard_data?days=${timePeriod}&risk=${riskFilter}&source=${sourceFilter}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            updateDashboardData(data);
+        }
+    } catch (error) {
+        console.error('Error updating dashboard:', error);
+    }
+}
+
+function updateDashboardData(data) {
+    // Update statistics
+    document.getElementById('highRiskCount').textContent = data.stats.high_risk_alerts || 0;
+    document.getElementById('mediumRiskCount').textContent = data.stats.medium_risk_alerts || 0;
+    document.getElementById('positiveCount').textContent = data.stats.positive_interactions || 0;
+    document.getElementById('totalInteractions').textContent = data.stats.total_interactions || 0;
+    
+    // Update alerts list
+    updateAlertsList(data.alerts || []);
+    
+    // Update students table
+    updateStudentsTable(data.student_interactions || []);
+}
+
+function updateAlertsList(alerts) {
+    const alertsList = document.getElementById('alertsList');
+    
+    if (alerts.length === 0) {
+        alertsList.innerHTML = '<div class="text-center py-8 text-gray-500">No active alerts at this time.</div>';
+        return;
+    }
+    
+    alertsList.innerHTML = alerts.map(alert => `
+        <div class="alert-item ${alert.risk_level}-risk" data-alert-id="${alert.id}">
+            <div class="alert-content">
+                <div class="alert-student">${alert.student_id} - ${alert.alert_type.replace('_', ' ')}</div>
+                <div class="alert-message">${alert.alert_message}</div>
+                <div class="alert-time">${alert.created_at}</div>
+            </div>
+            <div class="alert-actions">
+                ${alert.status === 'active' ? `
+                    <button class="btn-action btn-acknowledge" onclick="acknowledgeAlert('${alert.id}')">
+                        Acknowledge
+                    </button>
+                    <button class="btn-action btn-contact" onclick="contactStudent('${alert.student_id}')">
+                        Contact Student
+                    </button>
+                ` : `
+                    <span class="text-green-600 font-semibold">${alert.status}</span>
+                `}
+            </div>
+        </div>
+    `).join('');
+}
+
+function updateStudentsTable(interactions) {
+    const tableBody = document.getElementById('studentsTableBody');
+    
+    if (interactions.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500">No student interactions found.</td></tr>';
+        return;
+    }
+    
+    tableBody.innerHTML = interactions.map(interaction => {
+        const sentimentClass = interaction.sentiment_score > 0.1 ? 'positive' : 
+                              interaction.sentiment_score < -0.1 ? 'negative' : 'neutral';
+        
+        return `
+            <tr>
+                <td>${interaction.student_id}</td>
+                <td>${interaction.timestamp}</td>
+                <td>
+                    <span class="sentiment-score ${sentimentClass}">
+                        ${interaction.sentiment_score.toFixed(3)}
+                    </span>
+                </td>
+                <td>
+                    <span class="risk-badge ${interaction.risk_level}">
+                        ${interaction.risk_level}
+                    </span>
+                </td>
+                <td>${interaction.source_type}</td>
+                <td>
+                    <button class="btn-action btn-acknowledge" onclick="viewStudentDetails('${interaction.student_id}')">
+                        View Details
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+async function acknowledgeAlert(alertId) {
+    try {
+        const response = await fetch(`/api/acknowledge_alert/${alertId}`, {
+            method: 'POST'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Update the alert item to show acknowledged status
+            const alertItem = document.querySelector(`[data-alert-id="${alertId}"]`);
+            if (alertItem) {
+                const actionsDiv = alertItem.querySelector('.alert-actions');
+                actionsDiv.innerHTML = '<span class="text-green-600 font-semibold">Acknowledged</span>';
+            }
+        } else {
+            alert('Error acknowledging alert. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error acknowledging alert:', error);
+        alert('Error acknowledging alert. Please try again.');
+    }
+}
+
+function contactStudent(studentId) {
+    // Redirect to student detail page or open contact modal
+    window.open(`/student/${studentId}`, '_blank');
+}
+
+function viewStudentDetails(studentId) {
+    // Redirect to student detail page
+    window.location.href = `/student/${studentId}`;
+}
+
+async function exportReport() {
+    try {
+        // Show loading state
+        const exportBtn = document.querySelector('button[onclick="exportReport()"]');
+        const originalText = exportBtn.innerHTML;
+        exportBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating...';
+        exportBtn.disabled = true;
+        
+        const timePeriod = document.getElementById('timePeriod').value;
+        const response = await fetch(`/api/export_sentiment_report?days=${timePeriod}`);
+        
+        // Restore button
+        exportBtn.innerHTML = originalText;
+        exportBtn.disabled = false;
+        
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `sentiment_report_${new Date().toISOString().split('T')[0]}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            successMsg.style.cssText = 'top: 20px; right: 20px; z-index: 9999;';
+            successMsg.innerHTML = `
+                <i class="bi bi-download"></i> Report exported successfully!
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(successMsg);
+            setTimeout(() => successMsg.remove(), 3000);
+        } else {
+            const errorData = await response.json();
+            alert('Error generating report: ' + (errorData.error || 'Unknown error'));
+        }
+    } catch (error) {
+        // Restore button on error
+        const exportBtn = document.querySelector('button[onclick="exportReport()"]');
+        exportBtn.innerHTML = 'Export Report';
+        exportBtn.disabled = false;
+        
+        console.error('Error exporting report:', error);
+        alert('Error exporting report. Please try again.');
+    }
+}
+
+// Auto-refresh data every 5 minutes
+setInterval(refreshData, 5 * 60 * 1000);
+
+// Load initial data
+document.addEventListener('DOMContentLoaded', function() {
+    updateDashboard();
+});
+</script>
+{% endblock %}

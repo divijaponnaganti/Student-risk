@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}{{ student.Name }} - Student Details{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <a href="/students" class="btn btn-outline-secondary mb-3">
+            <i class="bi bi-arrow-left"></i> Back to Students
+        </a>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-4">{{ student.Name }}</h1>
+                <p class="lead text-muted">Student ID: {{ student.StudentID }}</p>
+            </div>
+            <div class="btn-group" role="group">
+                <a href="/student/{{ student.StudentID }}/report" class="btn btn-success">
+                    <i class="bi bi-file-earmark-pdf"></i> Download Report
+                </a>
+                {% if student.RiskLevel in ['Critical Risk','High Risk'] %}
+                <button onclick="sendAlert('{{ student.StudentID }}', '{{ student.Name }}')" class="btn btn-warning">
+                    <i class="bi bi-bell"></i> Send Alert
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-person-badge"></i> Student Profile</h5>
+            </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="text-muted small">Attendance Rate</label>
+                        <div class="progress progress-custom">
+                            <div class="progress-bar {% if student.Attendance < 60 %}bg-danger{% elif student.Attendance < 75 %}bg-warning{% else %}bg-success{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ student.Attendance }}%">
+                                {{ student.Attendance }}%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="text-muted small">Average Score</label>
+                        <div class="progress progress-custom">
+                            <div class="progress-bar {% if student.AverageScore < 50 %}bg-danger{% elif student.AverageScore < 70 %}bg-warning{% else %}bg-success{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ student.AverageScore }}%">
+                                {{ student.AverageScore }}%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="text-muted small">Engagement Score</label>
+                        <div class="progress progress-custom">
+                            <div class="progress-bar {% if student.EngagementScore < 40 %}bg-danger{% elif student.EngagementScore < 60 %}bg-warning{% else %}bg-success{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ student.EngagementScore }}%">
+                                {{ student.EngagementScore }}%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="text-muted small">Assignment Completion</label>
+                        <div class="progress progress-custom">
+                            {% set completion = (student.AssignmentsSubmitted / student.TotalAssignments * 100) | int %}
+                            <div class="progress-bar {% if completion < 50 %}bg-danger{% elif completion < 70 %}bg-warning{% else %}bg-success{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ completion }}%">
+                                {{ student.AssignmentsSubmitted }}/{{ student.TotalAssignments }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Previous Grade:</strong> <span class="badge bg-secondary">{{ student.PreviousGrade }}</span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Assignment Completion Rate:</strong> {{ "%.1f"|format(student.AssignmentCompletionRate) }}%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header {% if student.RiskLevel in ['Critical Risk','High Risk'] %}bg-danger{% elif student.RiskLevel == 'Medium Risk' %}bg-warning{% else %}bg-success{% endif %} text-white">
+                <h5 class="mb-0"><i class="bi bi-shield-exclamation"></i> Risk Assessment</h5>
+            </div>
+            <div class="card-body text-center">
+                <h2 class="display-5 mb-3">
+                    <span class="badge {% if student.RiskLevel in ['Critical Risk','High Risk'] %}badge-high-risk{% elif student.RiskLevel == 'Medium Risk' %}badge-medium-risk{% else %}badge-safe{% endif %}">
+                        {{ student.RiskLevel }}
+                    </span>
+                </h2>
+                {% if student.RiskLevel in ['Critical Risk','High Risk'] %}
+                <p class="text-danger"><i class="bi bi-exclamation-triangle-fill"></i> Immediate attention required</p>
+                {% elif student.RiskLevel == 'Medium Risk' %}
+                <p class="text-warning"><i class="bi bi-exclamation-circle-fill"></i> Monitor closely</p>
+                {% else %}
+                <p class="text-success"><i class="bi bi-check-circle-fill"></i> On track</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-lightbulb-fill"></i> Intervention Recommendations</h5>
+            </div>
+            <div class="card-body">
+                {% if interventions.type == 'ai_generated' %}
+                <div class="alert alert-success" role="alert">
+                    <i class="bi bi-robot"></i> <strong>AI-Generated Recommendations</strong>
+                </div>
+                <div class="intervention-content">
+                    {{ interventions.recommendations | safe }}
+                </div>
+                {% else %}
+                <div class="alert alert-info" role="alert">
+                    <i class="bi bi-list-check"></i> <strong>Rule-Based Recommendations</strong>
+                </div>
+                
+                <div class="mb-4">
+                    <h6><i class="bi bi-clipboard-check"></i> Assessment</h6>
+                    <p>{{ interventions.assessment }}</p>
+                </div>
+                
+                {% if interventions.interventions %}
+                <h6><i class="bi bi-arrow-right-circle"></i> Recommended Actions ({{ interventions.total_interventions }})</h6>
+                <div class="row">
+                    {% for intervention in interventions.interventions %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card intervention-card priority-{{ intervention.priority | lower }}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <span class="badge {% if intervention.priority == 'High' %}bg-danger{% elif intervention.priority == 'Medium' %}bg-warning text-dark{% else %}bg-info{% endif %}">
+                                        {{ intervention.priority }} Priority
+                                    </span>
+                                    <span class="badge bg-secondary">{{ intervention.category }}</span>
+                                </div>
+                                <p class="mb-2"><strong>{{ intervention.action }}</strong></p>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock"></i> Timeline: {{ intervention.timeline }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-success" role="alert">
+                    <i class="bi bi-check-circle"></i> No immediate interventions needed. Continue monitoring.
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .intervention-content {
+        white-space: pre-wrap;
+        line-height: 1.8;
+        padding: 1rem;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+    }
+</style>
+
+<script>
+function sendAlert(studentId, studentName) {
+    if (confirm(`Are you sure you want to send an alert for ${studentName}?`)) {
+        // Show loading state
+        const button = event.target.closest('button');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-hourglass-split"></i> Sending...';
+        button.disabled = true;
+        
+        fetch(`/api/send_alert/${studentId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Restore button
+            button.innerHTML = originalText;
+            button.disabled = false;
+            
+            if (data.success) {
+                // Show success popup
+                alert('✅ ' + data.message);
+            } else {
+                // Show error popup
+                alert('❌ ' + data.message);
+            }
+        })
+        .catch(error => {
+            // Restore button
+            button.innerHTML = originalText;
+            button.disabled = false;
+            
+            console.error('Error:', error);
+            alert('❌ An error occurred while sending the alert. Please try again.');
+        });
+    }
+}
+</script>
+{% endblock %}

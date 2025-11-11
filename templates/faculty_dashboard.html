@@ -1,0 +1,655 @@
+{% extends "base.html" %}
+
+{% block title %}Faculty Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-chalkboard-teacher text-success me-2"></i>
+                        Faculty Dashboard
+                    </h1>
+                    <p class="text-muted mb-0">Monitor and support your students</p>
+                </div>
+                <div>
+                    <span class="badge bg-success fs-6">
+                        <i class="fas fa-user me-1"></i>
+                        {{ current_user.get_full_name() }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-primary mb-3">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                    <h4 class="card-title">{{ stats.total_students or 0 }}</h4>
+                    <p class="card-text text-muted">My Students</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-danger mb-3">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                    <h4 class="card-title">{{ stats.high_risk or 0 }}</h4>
+                    <p class="card-text text-muted">High Risk</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-warning mb-3">
+                        <i class="fas fa-exclamation-circle fa-2x"></i>
+                    </div>
+                    <h4 class="card-title">{{ stats.medium_risk or 0 }}</h4>
+                    <p class="card-text text-muted">Medium Risk</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-success mb-3">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                    <h4 class="card-title">{{ stats.safe or 0 }}</h4>
+                    <p class="card-text text-muted">Safe</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <ul class="nav nav-tabs card-header-tabs" id="facultyTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="students-tab" data-bs-toggle="tab" data-bs-target="#students" type="button" role="tab">
+                                <i class="fas fa-users me-2"></i>My Students
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="predict-tab" data-bs-toggle="tab" data-bs-target="#predict" type="button" role="tab">
+                                <i class="fas fa-brain me-2"></i>Predict Risk
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="suggestions-tab" data-bs-toggle="tab" data-bs-target="#suggestions" type="button" role="tab">
+                                <i class="fas fa-lightbulb me-2"></i>AI Suggestions
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab">
+                                <i class="fas fa-file-alt me-2"></i>Generate Report
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content" id="facultyTabsContent">
+                        <!-- My Students Tab -->
+                        <div class="tab-pane fade show active" id="students" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0">My Students</h5>
+                                <div>
+                                    <select class="form-select" id="riskFilter">
+                                        <option value="">All Risk Levels</option>
+                                        <option value="High Risk">High Risk</option>
+                                        <option value="Medium Risk">Medium Risk</option>
+                                        <option value="Safe">Safe</option>
+                                    </select>
+                                </div>
+                            </div>
+                            {% if not students %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                No detailed metrics found for your assigned students. The sample dataset currently includes records for students S001–S030. Try logging in as <code>F001</code> to see sample metrics, or upload a full dataset to populate others.
+                            </div>
+                            {% endif %}
+                            
+                            <div class="row" id="studentsGrid">
+                                {% for student in students %}
+                                <div class="col-md-6 col-lg-4 mb-3">
+                                    <div class="card h-100 border-{{ 'danger' if student.RiskLevel in ['Critical Risk','High Risk'] else 'warning' if student.RiskLevel == 'Medium Risk' else 'success' }}">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h6 class="card-title mb-0">{{ student.Name }}</h6>
+                                                <span class="badge bg-{{ 'danger' if student.RiskLevel in ['Critical Risk','High Risk'] else 'warning' if student.RiskLevel == 'Medium Risk' else 'success' }}">
+                                                    {{ student.RiskLevel }}
+                                                </span>
+                                            </div>
+                                            <p class="text-muted small mb-2">ID: {{ student.StudentID }}</p>
+                                            
+                                            <div class="mb-2">
+                                                <small class="text-muted">Attendance:</small>
+                                                <div class="progress mb-1" style="height: 6px;">
+                                                    <div class="progress-bar bg-{{ 'danger' if student.Attendance < 50 else 'warning' if student.Attendance < 75 else 'success' }}" 
+                                                         style="width: {{ student.Attendance }}%"></div>
+                                                </div>
+                                                <small>{{ student.Attendance }}%</small>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <small class="text-muted">Average Score:</small>
+                                                <div class="progress mb-1" style="height: 6px;">
+                                                    <div class="progress-bar bg-{{ 'danger' if student.AverageScore < 50 else 'warning' if student.AverageScore < 70 else 'success' }}" 
+                                                         style="width: {{ student.AverageScore }}%"></div>
+                                                </div>
+                                                <small>{{ student.AverageScore }}%</small>
+                                            </div>
+                                            
+                                            <div class="d-flex gap-1">
+                                                <a href="{{ url_for('student_detail', student_id=student.StudentID) }}" class="btn btn-sm btn-outline-primary flex-fill">
+                                                    <i class="fas fa-eye"></i> View
+                                                </a>
+                                                <button class="btn btn-sm btn-outline-success" onclick="predictRisk('{{ student.StudentID }}')" title="Predict Risk">
+                                                    <i class="fas fa-brain"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-warning" onclick="sendAlert('{{ student.StudentID }}', '{{ student.Name }}')" title="Send Alert">
+                                                    <i class="fas fa-bell"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-info" onclick="showQuickAlertOptions('{{ student.StudentID }}', '{{ student.Name }}')" title="Quick Alert">
+                                                    <i class="fas fa-bolt"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Predict Risk Tab -->
+                        <div class="tab-pane fade" id="predict" role="tabpanel">
+                            <h5 class="mb-3">Risk Prediction</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <form id="predictForm">
+                                        <div class="mb-3">
+                                            <label class="form-label">Student</label>
+                                            <select class="form-select" name="student_id" required>
+                                                <option value="">Select Student</option>
+                                                {% for student in students %}
+                                                <option value="{{ student.StudentID }}">{{ student.Name }} ({{ student.StudentID }})</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-brain me-2"></i>Predict Risk
+                                        </button>
+                                    </form>
+                                </div>
+                                <div class="col-md-6">
+                                    <div id="predictionResult" class="d-none">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6>Prediction Result</h6>
+                                                <div id="resultContent"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- AI Suggestions Tab -->
+                        <div class="tab-pane fade" id="suggestions" role="tabpanel">
+                            <h5 class="mb-3">AI-Generated Suggestions</h5>
+                            <div class="row">
+                                {% for student in students %}
+                                {% if student.RiskLevel != 'Safe' %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-{{ 'danger' if student.RiskLevel == 'High Risk' else 'warning' }}">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">{{ student.Name }}</h6>
+                                            <small class="text-muted">{{ student.RiskLevel }}</small>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="suggestions-content" data-student="{{ student.StudentID }}">
+                                                <div class="text-center">
+                                                    <div class="spinner-border spinner-border-sm" role="status">
+                                                        <span class="visually-hidden">Loading...</span>
+                                                    </div>
+                                                    <p class="mt-2">Loading AI suggestions...</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Generate Report Tab -->
+                        <div class="tab-pane fade" id="reports" role="tabpanel">
+                            <h5 class="mb-3">Generate Reports</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">Individual Student Report</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <form id="individualReportForm">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Select Student</label>
+                                                    <select class="form-select" name="student_id" required>
+                                                        <option value="">Choose student...</option>
+                                                        {% for student in students %}
+                                                        <option value="{{ student.StudentID }}">{{ student.Name }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="fas fa-file-pdf me-2"></i>Generate PDF Report
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">Bulk Report</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <form id="bulkReportForm">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Risk Level</label>
+                                                    <select class="form-select" name="risk_level" required>
+                                                        <option value="High Risk">High Risk Students</option>
+                                                        <option value="Medium Risk">Medium Risk Students</option>
+                                                        <option value="">All My Students</option>
+                                                    </select>
+                                                </div>
+                                                <button type="submit" class="btn btn-success">
+                                                    <i class="fas fa-file-excel me-2"></i>Generate Bulk Report
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Alert Modal -->
+<div class="modal fade" id="quickAlertModal" tabindex="-1" aria-labelledby="quickAlertModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="quickAlertModalLabel">Quick Alert for <span id="studentNamePlaceholder"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quickAlertForm">
+                    <input type="hidden" id="alertStudentId">
+                    <div class="mb-3">
+                        <label class="form-label">Alert Type</label>
+                        <select class="form-select" id="alertType" required>
+                            <option value="">Select an alert type</option>
+                            <option value="attendance">Attendance Concern</option>
+                            <option value="performance">Performance Issue</option>
+                            <option value="behavior">Behavioral Concern</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Priority</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="priority" id="priorityLow" value="low" checked>
+                            <label class="form-check-label" for="priorityLow">Low</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="priority" id="priorityMedium" value="medium">
+                            <label class="form-check-label" for="priorityMedium">Medium</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="priority" id="priorityHigh" value="high">
+                            <label class="form-check-label" for="priorityHigh">High</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Message (Optional)</label>
+                        <textarea class="form-control" id="alertMessage" rows="3" placeholder="Add any additional details..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="submitQuickAlert()">
+                    <i class="fas fa-paper-plane me-1"></i> Send Alert
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Quick Alert Functions
+let currentStudentId = '';
+let currentStudentName = '';
+
+function showQuickAlertOptions(studentId, studentName) {
+    currentStudentId = studentId;
+    currentStudentName = studentName;
+    
+    // Update modal title
+    document.getElementById('studentNamePlaceholder').textContent = studentName;
+    document.getElementById('alertStudentId').value = studentId;
+    
+    // Reset form
+    document.getElementById('quickAlertForm').reset();
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('quickAlertModal'));
+    modal.show();
+}
+
+function submitQuickAlert() {
+    const alertType = document.getElementById('alertType').value;
+    const priority = document.querySelector('input[name="priority"]:checked').value;
+    const message = document.getElementById('alertMessage').value;
+    
+    if (!alertType) {
+        alert('Please select an alert type');
+        return;
+    }
+    
+    // Get the send button and show loading state
+    const sendBtn = document.querySelector('#quickAlertModal .btn-warning');
+    const originalBtnText = sendBtn.innerHTML;
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...';
+    
+    // Prepare alert data
+    const alertData = {
+        student_id: currentStudentId,
+        alert_type: alertType,
+        priority: priority,
+        message: message,
+        faculty_name: '{{ current_user.get_full_name() }}'
+    };
+    
+    // Send alert (you'll need to implement this endpoint)
+    fetch('/api/send_alert', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(alertData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success mt-3';
+            alertDiv.textContent = 'Alert sent successfully!';
+            document.querySelector('#quickAlertModal .modal-body').appendChild(alertDiv);
+            
+            // Close modal after 1.5 seconds
+            setTimeout(() => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('quickAlertModal'));
+                modal.hide();
+                
+                // Show success toast
+                const toast = new bootstrap.Toast(document.getElementById('alertSuccessToast'));
+                toast.show();
+            }, 1500);
+        } else {
+            throw new Error(data.message || 'Failed to send alert');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to send alert: ' + error.message);
+    })
+    .finally(() => {
+        // Restore button state
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = originalBtnText;
+    });
+}
+
+// Add success toast to the page
+const toastHTML = `
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="alertSuccessToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-success text-white">
+                <strong class="me-auto">Success</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                <i class="fas fa-check-circle me-2"></i> Alert sent successfully!
+            </div>
+        </div>
+    </div>
+`;
+document.body.insertAdjacentHTML('beforeend', toastHTML);
+
+// Load AI suggestions when tab is shown
+document.getElementById('suggestions-tab').addEventListener('shown.bs.tab', function() {
+    loadAISuggestions();
+});
+
+function loadAISuggestions() {
+    document.querySelectorAll('.suggestions-content').forEach(function(element) {
+        const studentId = element.dataset.student;
+        
+        fetch(`/api/ai_suggestions/${studentId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.suggestions && data.suggestions.length > 0) {
+                    let html = '<ul class="list-unstyled">';
+                    data.suggestions.forEach(suggestion => {
+                        html += `<li class="mb-2"><i class="fas fa-lightbulb text-warning me-2"></i>${suggestion}</li>`;
+                    });
+                    html += '</ul>';
+                    element.innerHTML = html;
+                } else {
+                    element.innerHTML = '<p class="text-muted">No specific suggestions available.</p>';
+                }
+            })
+            .catch(error => {
+                element.innerHTML = '<p class="text-danger">Error loading suggestions.</p>';
+            });
+    });
+}
+
+function predictRisk(studentId) {
+    // Switch to predict tab and select the student
+    const predictTab = new bootstrap.Tab(document.getElementById('predict-tab'));
+    predictTab.show();
+    
+    // Set the student in the dropdown
+    setTimeout(() => {
+        const studentSelect = document.querySelector('#predict select[name="student_id"]');
+        if (studentSelect) {
+            studentSelect.value = studentId;
+        }
+    }, 100);
+}
+
+function sendAlert(studentId, studentName) {
+    if (confirm(`Send alert notification for ${studentName}?`)) {
+        // Show loading state
+        const alertBtn = event.target.closest('button');
+        const originalHTML = alertBtn.innerHTML;
+        alertBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        alertBtn.disabled = true;
+        
+        fetch(`/api/send_alert/${studentId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Restore button state
+            alertBtn.innerHTML = originalHTML;
+            alertBtn.disabled = false;
+            
+            if (data.success) {
+                alert(`Alert sent successfully for ${studentName}!`);
+                // Change button to success state
+                alertBtn.classList.remove('btn-outline-warning');
+                alertBtn.classList.add('btn-outline-success');
+                alertBtn.innerHTML = '<i class="fas fa-check"></i>';
+                alertBtn.disabled = true; // Keep disabled to prevent duplicate sends
+            } else {
+                alert(`Failed to send alert: ${data.message}`);
+            }
+        })
+        .catch(error => {
+            // Restore button state
+            alertBtn.innerHTML = originalHTML;
+            alertBtn.disabled = false;
+            
+            console.error('Error:', error);
+            alert('An error occurred while sending the alert');
+        });
+    }
+}
+
+// Handle predict form submission
+document.getElementById('predictForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const studentId = formData.get('student_id');
+    
+    if (!studentId) {
+        alert('Please select a student');
+        return;
+    }
+    
+    // Show loading
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Predicting...';
+    submitBtn.disabled = true;
+    
+    fetch('/api/predict_risk', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ student_id: studentId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Restore button
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+        
+        if (data.success) {
+            // Show result
+            const resultDiv = document.getElementById('predictionResult');
+            const contentDiv = document.getElementById('resultContent');
+            
+            contentDiv.innerHTML = `
+                <div class="alert alert-${data.risk_level === 'High Risk' ? 'danger' : data.risk_level === 'Medium Risk' ? 'warning' : 'success'}">
+                    <h6>Risk Level: ${data.risk_level}</h6>
+                    <p>Confidence: ${(data.confidence * 100).toFixed(1)}%</p>
+                    ${data.recommendations ? `<small>${data.recommendations}</small>` : ''}
+                </div>
+            `;
+            
+            resultDiv.classList.remove('d-none');
+        } else {
+            alert('Error: ' + (data.error || 'Failed to predict risk'));
+        }
+    })
+    .catch(error => {
+        // Restore button
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+        
+        console.error('Error:', error);
+        alert('An error occurred while predicting risk');
+    });
+});
+
+// Handle individual report form
+document.getElementById('individualReportForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const studentId = formData.get('student_id');
+    
+    if (!studentId) {
+        alert('Please select a student');
+        return;
+    }
+    
+    // Show loading
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
+    submitBtn.disabled = true;
+    
+    // Redirect to report generation
+    window.location.href = `/student/${studentId}/report`;
+});
+
+// Handle bulk report form
+document.getElementById('bulkReportForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const riskLevel = formData.get('risk_level');
+    
+    // Show loading
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
+    submitBtn.disabled = true;
+    
+    // Redirect to bulk report generation
+    const url = riskLevel ? `/reports/bulk?risk_filter=${encodeURIComponent(riskLevel)}` : '/reports/bulk';
+    window.location.href = url;
+});
+
+// Risk filter functionality
+document.getElementById('riskFilter').addEventListener('change', function() {
+    const filterValue = this.value;
+    const studentCards = document.querySelectorAll('#studentsGrid .col-md-6');
+    
+    studentCards.forEach(card => {
+        const badge = card.querySelector('.badge');
+        const riskLevel = badge ? badge.textContent.trim() : '';
+        
+        if (!filterValue || riskLevel === filterValue) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

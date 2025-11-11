@@ -1,0 +1,816 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-user-graduate text-info me-2"></i>
+                        Welcome, {{ current_user.first_name }}!
+                    </h1>
+                    <p class="text-muted mb-0">Track your academic progress and get personalized insights</p>
+                </div>
+                <div>
+                    <span class="badge bg-info fs-6">
+                        <i class="fas fa-id-card me-1"></i>
+                        {{ current_user.student_id }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Risk Level Alert -->
+    {% if student_data and student_data.RiskLevel == 'High Risk' %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-danger border-0 shadow-sm" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                    <div>
+                        <h5 class="alert-heading mb-1">Attention Needed</h5>
+                        <p class="mb-0">Your current academic performance indicates high risk. Please review the improvement tips below and consider reaching out for support.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% elif student_data and student_data.RiskLevel == 'Medium Risk' %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-warning border-0 shadow-sm" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-circle fa-2x me-3"></i>
+                    <div>
+                        <h5 class="alert-heading mb-1">Room for Improvement</h5>
+                        <p class="mb-0">Your academic performance shows some areas that need attention. Check out the personalized tips to stay on track.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Performance Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-primary mb-3">
+                        <i class="fas fa-calendar-check fa-2x"></i>
+                    </div>
+                    <h4 class="card-title">{{ student_data.Attendance if student_data else 'N/A' }}%</h4>
+                    <p class="card-text text-muted">Attendance Rate</p>
+                    {% if student_data %}
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-{{ 'danger' if student_data.Attendance < 50 else 'warning' if student_data.Attendance < 75 else 'success' }}" 
+                             style="width: {{ student_data.Attendance }}%"></div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-success mb-3">
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </div>
+                    <h4 class="card-title">{{ student_data.AverageScore if student_data else 'N/A' }}%</h4>
+                    <p class="card-text text-muted">Average Score</p>
+                    {% if student_data %}
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-{{ 'danger' if student_data.AverageScore < 50 else 'warning' if student_data.AverageScore < 70 else 'success' }}" 
+                             style="width: {{ student_data.AverageScore }}%"></div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-info mb-3">
+                        <i class="fas fa-tasks fa-2x"></i>
+                    </div>
+                    <h4 class="card-title">
+                        {{ student_data.AssignmentsSubmitted if student_data else 'N/A' }}/{{ student_data.TotalAssignments if student_data else 'N/A' }}
+                    </h4>
+                    <p class="card-text text-muted">Assignments</p>
+                    {% if student_data %}
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-info" 
+                             style="width: {{ (student_data.AssignmentsSubmitted / student_data.TotalAssignments * 100) if student_data.TotalAssignments > 0 else 0 }}%"></div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="text-warning mb-3">
+                        <i class="fas fa-heart fa-2x"></i>
+                    </div>
+                    <h4 class="card-title">{{ student_data.EngagementScore if student_data else 'N/A' }}%</h4>
+                    <p class="card-text text-muted">Engagement</p>
+                    {% if student_data %}
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-warning" 
+                             style="width: {{ student_data.EngagementScore }}%"></div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <ul class="nav nav-tabs card-header-tabs" id="studentTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="performance-tab" data-bs-toggle="tab" data-bs-target="#performance" type="button" role="tab">
+                                <i class="fas fa-chart-bar me-2"></i>My Performance
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="risk-tab" data-bs-toggle="tab" data-bs-target="#risk" type="button" role="tab">
+                                <i class="fas fa-shield-alt me-2"></i>My Risk Level
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tips-tab" data-bs-toggle="tab" data-bs-target="#tips" type="button" role="tab">
+                                <i class="fas fa-lightbulb me-2"></i>Improvement Tips
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat" type="button" role="tab">
+                                <i class="fas fa-comments me-2"></i>AI Assistant
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content" id="studentTabsContent">
+                        <!-- My Performance Tab -->
+                        <div class="tab-pane fade show active" id="performance" role="tabpanel">
+                            <h5 class="mb-3">Academic Performance Overview</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">Performance Metrics</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <canvas id="performanceChart" width="400" height="200"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="card h-100">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">Key Insights</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            {% if student_data %}
+                                            <div class="mb-3">
+                                                <small class="text-muted">Strongest Area:</small>
+                                                <p class="mb-0 fw-bold text-success">
+                                                    {% if student_data.AverageScore >= student_data.Attendance and student_data.AverageScore >= student_data.EngagementScore %}
+                                                        Academic Performance
+                                                    {% elif student_data.Attendance >= student_data.EngagementScore %}
+                                                        Class Attendance
+                                                    {% else %}
+                                                        Class Engagement
+                                                    {% endif %}
+                                                </p>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <small class="text-muted">Needs Attention:</small>
+                                                <p class="mb-0 fw-bold text-warning">
+                                                    {% if student_data.AverageScore <= student_data.Attendance and student_data.AverageScore <= student_data.EngagementScore %}
+                                                        Academic Performance
+                                                    {% elif student_data.Attendance <= student_data.EngagementScore %}
+                                                        Class Attendance
+                                                    {% else %}
+                                                        Class Engagement
+                                                    {% endif %}
+                                                </p>
+                                            </div>
+                                            
+                                            <div>
+                                                <small class="text-muted">Overall Grade:</small>
+                                                <p class="mb-0 fw-bold">{{ student_data.PreviousGrade or 'N/A' }}</p>
+                                            </div>
+                                            {% else %}
+                                            <p class="text-muted">No performance data available.</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- My Risk Level Tab -->
+                        <div class="tab-pane fade" id="risk" role="tabpanel">
+                            <h5 class="mb-3">Risk Assessment</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card border-{{ 'danger' if student_data and student_data.RiskLevel == 'High Risk' else 'warning' if student_data and student_data.RiskLevel == 'Medium Risk' else 'success' }}">
+                                        <div class="card-body text-center">
+                                            <div class="mb-3">
+                                                {% if student_data and student_data.RiskLevel == 'High Risk' %}
+                                                    <i class="fas fa-exclamation-triangle fa-4x text-danger"></i>
+                                                {% elif student_data and student_data.RiskLevel == 'Medium Risk' %}
+                                                    <i class="fas fa-exclamation-circle fa-4x text-warning"></i>
+                                                {% else %}
+                                                    <i class="fas fa-check-circle fa-4x text-success"></i>
+                                                {% endif %}
+                                            </div>
+                                            <h4 class="card-title">{{ student_data.RiskLevel if student_data else 'Unknown' }}</h4>
+                                            <p class="card-text">
+                                                {% if student_data and student_data.RiskLevel == 'High Risk' %}
+                                                    Your academic performance indicates high risk. Immediate action recommended.
+                                                {% elif student_data and student_data.RiskLevel == 'Medium Risk' %}
+                                                    Some areas need improvement. Stay focused on your goals.
+                                                {% else %}
+                                                    Great job! Keep up the excellent work.
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">Risk Factors</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            {% if student_data %}
+                                            <div class="mb-2">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Attendance</span>
+                                                    <span class="text-{{ 'danger' if student_data.Attendance < 50 else 'warning' if student_data.Attendance < 75 else 'success' }}">
+                                                        {{ 'High Risk' if student_data.Attendance < 50 else 'Medium Risk' if student_data.Attendance < 75 else 'Low Risk' }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="mb-2">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Academic Performance</span>
+                                                    <span class="text-{{ 'danger' if student_data.AverageScore < 50 else 'warning' if student_data.AverageScore < 70 else 'success' }}">
+                                                        {{ 'High Risk' if student_data.AverageScore < 50 else 'Medium Risk' if student_data.AverageScore < 70 else 'Low Risk' }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="mb-2">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Assignment Completion</span>
+                                                    {% set assignments_pct = (student_data.AssignmentsSubmitted / student_data.TotalAssignments * 100) if (student_data and student_data.TotalAssignments > 0) else 0 %}
+                                                    <span class="text-{{ 'danger' if assignments_pct < 50 else 'warning' if assignments_pct < 75 else 'success' }}">
+                                                        {{ 'High Risk' if assignments_pct < 50 else 'Medium Risk' if assignments_pct < 75 else 'Low Risk' }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Engagement</span>
+                                                    <span class="text-{{ 'danger' if student_data.EngagementScore < 50 else 'warning' if student_data.EngagementScore < 75 else 'success' }}">
+                                                        {{ 'High Risk' if student_data.EngagementScore < 50 else 'Medium Risk' if student_data.EngagementScore < 75 else 'Low Risk' }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            {% else %}
+                                            <p class="text-muted">No risk assessment data available.</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Improvement Tips Tab -->
+                        <div class="tab-pane fade" id="tips" role="tabpanel">
+                            <h5 class="mb-3">Personalized Improvement Tips</h5>
+                            
+                            <div class="row">
+                                <div class="col-12">
+                                    <div id="improvementTips">
+                                        <div class="text-center">
+                                            <div class="spinner-border" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                            <p class="mt-2">Loading personalized tips...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Study Materials & Support Section -->
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h5 class="mb-3">Study Resources & Support</h5>
+                                    <div class="row g-3">
+                                        <!-- Study Materials -->
+                                        <div class="col-md-6">
+                                            <div class="card border-primary h-100">
+                                                <div class="card-header bg-primary text-white">
+                                                    <h6 class="mb-0"><i class="fas fa-book me-2"></i>Study Materials</h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <ul class="list-group list-group-flush">
+                                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                            <span><i class="fas fa-file-pdf text-danger me-2"></i>Mathematics Study Guide</span>
+                                                            <a href="/study_materials/math_guide" class="btn btn-sm btn-outline-primary" download>
+                                                                <i class="fas fa-download me-1"></i>Download
+                                                            </a>
+                                                        </li>
+                                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                            <span><i class="fas fa-file-word text-primary me-2"></i>Science Practice Questions</span>
+                                                            <a href="/study_materials/science_questions" class="btn btn-sm btn-outline-primary" download>
+                                                                <i class="fas fa-download me-1"></i>Download
+                                                            </a>
+                                                        </li>
+                                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                            <span><i class="fas fa-video text-info me-2"></i>Video Tutorials</span>
+                        <a href="#" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#videoTutorialsModal">
+                            <i class="fas fa-play me-1"></i>Watch
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+                                        
+                                        <!-- Contact Support -->
+                                        <div class="col-md-6">
+                                            <div class="card border-warning h-100">
+                                                <div class="card-header bg-warning">
+                                                    <h6 class="mb-0"><i class="fas fa-headset me-2"></i>Need Help? Contact Us</h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <ul class="list-group list-group-flush">
+                                                        <li class="list-group-item">
+                                                            <i class="fas fa-phone-alt text-success me-2"></i>
+                                                            <strong>24/7 Support:</strong> 
+                                                            <a href="tel:+911234567890" class="text-decoration-none">+91 12345 67890</a>
+                                                        </li>
+                                                        <li class="list-group-item">
+                                                            <i class="fas fa-envelope text-primary me-2"></i>
+                                                            <strong>Email:</strong> 
+                                                            <a href="mailto:support@school.edu" class="text-decoration-none">support@school.edu</a>
+                                                        </li>
+                                                        <li class="list-group-item">
+                                                            <i class="fas fa-clock text-info me-2"></i>
+                                                            <strong>Office Hours:</strong> Mon-Fri, 9:00 AM - 5:00 PM
+                                                        </li>
+                                                        <li class="list-group-item">
+                                                            <i class="fas fa-comments text-secondary me-2"></i>
+                                                            <strong>Live Chat:</strong> 
+                                                            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#liveChatModal">
+                                                                Click to start chat
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- AI Assistant Tab -->
+                        <div class="tab-pane fade" id="chat" role="tabpanel">
+                            <h5 class="mb-3">AI Study Assistant</h5>
+                            
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-body" style="height: 400px; overflow-y: auto;" id="chatMessages">
+                                            <div class="text-center text-muted">
+                                                <i class="fas fa-robot fa-3x mb-3"></i>
+                                                <p>Hello! I'm your AI study assistant. How can I help you today?</p>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer">
+                                            <form id="chatForm">
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" id="chatInput" placeholder="Ask me anything about your studies...">
+                                                    <button class="btn btn-primary" type="submit">
+                                                        <i class="fas fa-paper-plane"></i>
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Live Chat Modal -->
+<div class="modal fade" id="liveChatModal" tabindex="-1" aria-labelledby="liveChatModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="liveChatModalLabel"><i class="fas fa-comments me-2"></i>Live Support Chat</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="liveChatMessages" style="max-height: 400px; overflow-y: auto;">
+        <div class="text-center text-muted">
+          <i class="fas fa-headset fa-2x mb-2"></i>
+          <p>Hi! How can I support you today?</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <form id="liveChatForm" class="w-100">
+          <div class="input-group">
+            <input type="text" class="form-control" id="liveChatInput" placeholder="Type your message...">
+            <button class="btn btn-primary" type="submit">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Video Tutorials Modal -->
+<div class="modal fade" id="videoTutorialsModal" tabindex="-1" aria-labelledby="videoTutorialsLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="videoTutorialsLabel"><i class="fas fa-video me-2"></i>Video Tutorials</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted">Here are helpful study and wellness tutorials. Links open in a new tab.</p>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-body">
+                <h6 class="card-title"><i class="fas fa-hourglass-half me-2"></i>Time Management Basics</h6>
+                <p class="card-text">Learn practical strategies to plan your week and avoid last-minute cramming.</p>
+                <a href="https://www.youtube.com/results?search_query=time+management+for+students" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">
+                  <i class="fas fa-external-link-alt me-1"></i>Watch on YouTube
+                </a>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-body">
+                <h6 class="card-title"><i class="fas fa-brain me-2"></i>Effective Study Techniques</h6>
+                <p class="card-text">Discover active recall, spaced repetition, and how to study smarter.</p>
+                <a href="https://www.youtube.com/results?search_query=effective+study+techniques" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">
+                  <i class="fas fa-external-link-alt me-1"></i>Watch on YouTube
+                </a>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-body">
+                <h6 class="card-title"><i class="fas fa-notes-medical me-2"></i>Managing Test Anxiety</h6>
+                <p class="card-text">Tips to stay calm, prepare well, and perform your best under pressure.</p>
+                <a href="https://www.youtube.com/results?search_query=managing+test+anxiety" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">
+                  <i class="fas fa-external-link-alt me-1"></i>Watch on YouTube
+                </a>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-body">
+                <h6 class="card-title"><i class="fas fa-balance-scale me-2"></i>Study-Life Balance</h6>
+                <p class="card-text">Build routines that support wellbeing alongside academic goals.</p>
+                <a href="https://www.youtube.com/results?search_query=student+wellbeing+balance" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">
+                  <i class="fas fa-external-link-alt me-1"></i>Watch on YouTube
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="alert alert-info mt-3 mb-0">
+          Looking for campus-specific tutorials? Contact support to add your institution’s video links here.
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Initialize performance chart
+{% if student_data %}
+const ctx = document.getElementById('performanceChart').getContext('2d');
+new Chart(ctx, {
+    type: 'radar',
+    data: {
+        labels: ['Attendance', 'Average Score', 'Assignment Completion', 'Engagement'],
+        datasets: [{
+            label: 'Your Performance',
+            data: [
+                {{ student_data.Attendance }},
+                {{ student_data.AverageScore }},
+                {{ (student_data.AssignmentsSubmitted / student_data.TotalAssignments * 100) if student_data.TotalAssignments > 0 else 0 }},
+                {{ student_data.EngagementScore }}
+            ],
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgba(54, 162, 235, 1)'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            r: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    }
+});
+{% endif %}
+
+// Load improvement tips when tab is shown
+const tabsEl = document.getElementById('studentTabs');
+if (tabsEl) {
+    tabsEl.addEventListener('shown.bs.tab', function(e) {
+        const target = e.target;
+        if (target && target.id === 'tips-tab') {
+            loadImprovementTips();
+        }
+    });
+}
+
+// Debug: Check if student ID is available
+console.log('Student ID:', '{{ current_user.student_id }}');
+console.log('User authenticated:', {{ 'true' if current_user.is_authenticated else 'false' }});
+
+// Auto-load tips on page load if tab is active
+document.addEventListener('DOMContentLoaded', function() {
+    const tipsTab = document.getElementById('tips-tab');
+    if (tipsTab && tipsTab.classList.contains('active')) {
+        loadImprovementTips();
+    }
+});
+
+function loadImprovementTips() {
+    const studentId = '{{ current_user.student_id }}';
+    
+    if (!studentId) {
+        document.getElementById('improvementTips').innerHTML = '<div class="alert alert-warning">Student ID not found. Please log in again.</div>';
+        return;
+    }
+    
+    fetch(`/api/ai_suggestions/${studentId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const tipsContainer = document.getElementById('improvementTips');
+            
+            if (data.error) {
+                tipsContainer.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+                return;
+            }
+            
+            if (data.suggestions && data.suggestions.length > 0) {
+                let html = '<div class="row">';
+                data.suggestions.forEach((suggestion, index) => {
+                    html += `
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-info">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-start">
+                                        <i class="bi bi-lightbulb text-warning me-3 mt-1"></i>
+                                        <div>
+                                            <p class="mb-0">${suggestion}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                tipsContainer.innerHTML = html;
+            } else {
+                tipsContainer.innerHTML = '<div class="alert alert-info"><i class="bi bi-check-circle me-2"></i>Keep up the great work! No specific improvement areas identified.</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading improvement tips:', error);
+            document.getElementById('improvementTips').innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>Error loading improvement tips: ${error.message}</div>`;
+        });
+}
+
+// Chat functionality
+const chatForm = document.getElementById('chatForm');
+if (chatForm) {
+    chatForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const input = document.getElementById('chatInput');
+        const message = input.value.trim();
+        const studentId = '{{ current_user.student_id }}';
+        // Stable session ID across page loads for conversation continuity
+        let sessionId = localStorage.getItem('chatSessionId');
+        if (!sessionId) {
+            if (window.crypto && crypto.randomUUID) {
+                sessionId = crypto.randomUUID();
+            } else {
+                sessionId = Date.now() + '-' + Math.random().toString(16).slice(2);
+            }
+            localStorage.setItem('chatSessionId', sessionId);
+        }
+        
+        if (!studentId) {
+            addChatMessage('bot', 'Error: Student ID not found. Please log in again.');
+            return;
+        }
+        
+        if (message) {
+            addChatMessage('user', message);
+            input.value = '';
+            
+            // Show typing indicator
+            addChatMessage('bot', '<i class="bi bi-three-dots"></i> AI is typing...');
+            
+            // Send to AI assistant
+            fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                // Ensure session cookies are sent for @login_required
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    student_id: studentId,
+                    message: message,
+                    session_id: sessionId
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const ct = response.headers.get('content-type') || '';
+                if (!ct.includes('application/json')) {
+                    throw new Error('Unexpected response format. Please log in again and retry.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Remove typing indicator
+                const chatMessages = document.getElementById('chatMessages');
+                const lastMessage = chatMessages.lastElementChild;
+                if (lastMessage && lastMessage.innerHTML.includes('typing')) {
+                    lastMessage.remove();
+                }
+                
+                if (data.success && data.bot_response) {
+                    addChatMessage('bot', data.bot_response);
+                } else {
+                    addChatMessage('bot', `Sorry, I encountered an error: ${data.error || 'Unknown error'}. Please try again.`);
+                }
+            })
+            .catch(error => {
+                // Remove typing indicator
+                const chatMessages = document.getElementById('chatMessages');
+                const lastMessage = chatMessages.lastElementChild;
+                if (lastMessage && lastMessage.innerHTML.includes('typing')) {
+                    lastMessage.remove();
+                }
+                
+                console.error('Chat error:', error);
+                addChatMessage('bot', `Sorry, I encountered an error: ${error.message}. Please try again.`);
+            });
+        }
+    });
+}
+
+function addChatMessage(sender, message) {
+    const chatMessages = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `mb-3 ${sender === 'user' ? 'text-end' : 'text-start'}`;
+    
+    messageDiv.innerHTML = `
+        <div class="d-inline-block p-2 rounded ${sender === 'user' ? 'bg-primary text-white' : 'bg-light'}" style="max-width: 70%;">
+            ${message}
+        </div>
+    `;
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Live Chat (modal) functionality
+const liveChatForm = document.getElementById('liveChatForm');
+if (liveChatForm) {
+  liveChatForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const input = document.getElementById('liveChatInput');
+    const message = input.value.trim();
+    const studentId = '{{ current_user.student_id }}';
+    // Reuse same session ID for the modal chat
+    let sessionId = localStorage.getItem('chatSessionId');
+    if (!sessionId) {
+      if (window.crypto && crypto.randomUUID) {
+        sessionId = crypto.randomUUID();
+      } else {
+        sessionId = Date.now() + '-' + Math.random().toString(16).slice(2);
+      }
+      localStorage.setItem('chatSessionId', sessionId);
+    }
+
+    if (!studentId) {
+      addLiveChatMessage('bot', 'Error: Student ID not found. Please log in again.');
+      return;
+    }
+
+    if (message) {
+      addLiveChatMessage('user', message);
+      input.value = '';
+
+      // Typing indicator
+      addLiveChatMessage('bot', '<i class="bi bi-three-dots"></i> Support is typing...');
+
+      fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ student_id: studentId, message, session_id: sessionId })
+      })
+      .then(response => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const ct = response.headers.get('content-type') || '';
+        if (!ct.includes('application/json')) {
+          throw new Error('Unexpected response format. Please log in again and retry.');
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Remove typing indicator
+        const msgs = document.getElementById('liveChatMessages');
+        const last = msgs.lastElementChild;
+        if (last && last.innerHTML.includes('typing')) last.remove();
+
+        if (data.success && data.bot_response) {
+          addLiveChatMessage('bot', data.bot_response);
+        } else {
+          addLiveChatMessage('bot', `Sorry, I encountered an error: ${data.error || 'Unknown error'}. Please try again.`);
+        }
+      })
+      .catch(error => {
+        const msgs = document.getElementById('liveChatMessages');
+        const last = msgs.lastElementChild;
+        if (last && last.innerHTML.includes('typing')) last.remove();
+        console.error('Live chat error:', error);
+        addLiveChatMessage('bot', `Sorry, I encountered an error: ${error.message}. Please try again.`);
+      });
+    }
+  });
+}
+
+function addLiveChatMessage(sender, message) {
+  const msgs = document.getElementById('liveChatMessages');
+  const div = document.createElement('div');
+  div.className = `mb-2 ${sender === 'user' ? 'text-end' : 'text-start'}`;
+  div.innerHTML = `
+    <div class="d-inline-block p-2 rounded ${sender === 'user' ? 'bg-primary text-white' : 'bg-light'}" style="max-width: 70%;">
+      ${message}
+    </div>
+  `;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+</script>
+{% endblock %}

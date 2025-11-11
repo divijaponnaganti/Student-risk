@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Prediction Result - Student Risk Prediction{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-4"><i class="bi bi-check-circle"></i> Prediction Result</h1>
+        <p class="lead text-muted">Risk assessment completed</p>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header {% if prediction.risk_level in ['Critical Risk','High Risk'] %}bg-danger{% elif prediction.risk_level == 'Medium Risk' %}bg-warning{% else %}bg-success{% endif %} text-white">
+                <h5 class="mb-0"><i class="bi bi-shield-check"></i> Risk Assessment</h5>
+            </div>
+            <div class="card-body text-center p-5">
+                <h2 class="display-3 mb-3">
+                    <span class="badge {% if prediction.risk_level in ['Critical Risk','High Risk'] %}badge-high-risk{% elif prediction.risk_level == 'Medium Risk' %}badge-medium-risk{% else %}badge-safe{% endif %}">
+                        {{ 'High Risk' if prediction.risk_level == 'Critical Risk' else prediction.risk_level }}
+                    </span>
+                </h2>
+                <p class="lead mb-4">Confidence: {{ "%.1f"|format(prediction.confidence) }}%</p>
+                
+                {% if prediction.risk_level in ['Critical Risk','High Risk'] %}
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill"></i> 
+                    <strong>High Risk:</strong> This student requires immediate intervention and support.
+                </div>
+                {% elif prediction.risk_level == 'Medium Risk' %}
+                <div class="alert alert-warning" role="alert">
+                    <i class="bi bi-exclamation-circle-fill"></i> 
+                    <strong>Warning:</strong> This student shows signs of risk and should be monitored closely.
+                </div>
+                {% else %}
+                <div class="alert alert-success" role="alert">
+                    <i class="bi bi-check-circle-fill"></i> 
+                    <strong>Good:</strong> This student is performing well and on track.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Input Data Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="text-muted small">Attendance Rate</label>
+                        <div class="progress progress-custom">
+                            <div class="progress-bar {% if student_data.Attendance < 60 %}bg-danger{% elif student_data.Attendance < 75 %}bg-warning{% else %}bg-success{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ student_data.Attendance }}%">
+                                {{ student_data.Attendance }}%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="text-muted small">Average Score</label>
+                        <div class="progress progress-custom">
+                            <div class="progress-bar {% if student_data.AverageScore < 50 %}bg-danger{% elif student_data.AverageScore < 70 %}bg-warning{% else %}bg-success{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ student_data.AverageScore }}%">
+                                {{ student_data.AverageScore }}%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="text-muted small">Engagement Score</label>
+                        <div class="progress progress-custom">
+                            <div class="progress-bar {% if student_data.EngagementScore < 40 %}bg-danger{% elif student_data.EngagementScore < 60 %}bg-warning{% else %}bg-success{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ student_data.EngagementScore }}%">
+                                {{ student_data.EngagementScore }}%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="text-muted small">Assignment Completion</label>
+                        {% set completion = (student_data.AssignmentsSubmitted / student_data.TotalAssignments * 100) | int %}
+                        <div class="progress progress-custom">
+                            <div class="progress-bar {% if completion < 50 %}bg-danger{% elif completion < 70 %}bg-warning{% else %}bg-success{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ completion }}%">
+                                {{ student_data.AssignmentsSubmitted }}/{{ student_data.TotalAssignments }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Probability Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="probabilityChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="d-grid gap-2">
+            <a href="/predict" class="btn btn-primary btn-lg">
+                <i class="bi bi-arrow-repeat"></i> Predict Another Student
+            </a>
+            <a href="/" class="btn btn-outline-secondary">
+                <i class="bi bi-house"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const ctx = document.getElementById('probabilityChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [{% for label in prediction.probabilities.keys() %}'{{ label }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Probability (%)',
+                data: [{% for prob in prediction.probabilities.values() %}{{ "%.2f"|format(prob) }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                backgroundColor: ['#dc3545', '#ffc107', '#28a745'],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y.toFixed(2) + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

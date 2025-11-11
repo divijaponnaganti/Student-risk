@@ -1,0 +1,18 @@
+StudentID,Name,Attendance,AverageScore,EngagementScore,PreviousGrade,TeacherEmail,ParentEmail,ParentPhone
+S017,Quinn Walker,35,32,25,F,teacher3@school.edu,parent.walker@email.com,+1-555-0117
+S006,Frank Miller,38,35,28,D,teacher3@school.edu,parent.miller@email.com,+1-555-0106
+S027,Amy Adams,38,35,32,D,teacher1@school.edu,parent.adams@email.com,+1-555-0127
+S021,Uma King,40,38,35,D,teacher1@school.edu,parent.king@email.com,+1-555-0121
+S011,Kate Taylor,42,40,38,D,teacher3@school.edu,parent.taylor@email.com,+1-555-0111
+S025,Yara Scott,45,42,40,D,teacher2@school.edu,parent.scott@email.com,+1-555-0125
+S002,Bob Smith,45,42,35,C,teacher1@school.edu,parent.smith@email.com,+1-555-0102
+S015,Olivia Clark,48,45,42,D,teacher1@school.edu,parent.clark@email.com,+1-555-0115
+S030,Dan Carter,48,45,43,D,teacher1@school.edu,parent.carter@email.com,+1-555-0130
+S009,Ivy Martinez,50,48,45,C,teacher1@school.edu,parent.martinez@email.com,+1-555-0109
+S019,Sam Allen,52,50,48,C,teacher2@school.edu,parent.allen@email.com,+1-555-0119
+S004,David Brown,55,58,52,C,teacher2@school.edu,parent.brown@email.com,+1-555-0104
+S023,Wendy Lopez,55,52,50,C,teacher3@school.edu,parent.lopez@email.com,+1-555-0123
+S013,Mia Jackson,58,55,50,C,teacher2@school.edu,parent.jackson@email.com,+1-555-0113
+S029,Chloe Nelson,60,58,55,C,teacher3@school.edu,parent.nelson@email.com,+1-555-0129
+S008,Henry Wilson,65,68,62,B,teacher3@school.edu,parent.wilson@email.com,+1-555-0108
+S020,Tina Young,68,62,65,B,teacher3@school.edu,parent.young@email.com,+1-555-0120
